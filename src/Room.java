@@ -76,4 +76,8 @@ public class Room {
     public int getCols() {
         return cols;
     }
+
+    public String getPath() {
+        return path;
+    }
 }

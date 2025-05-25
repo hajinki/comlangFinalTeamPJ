@@ -3,6 +3,7 @@ public class Hero {
     private int hp;
     private Weapon weapon;
     private boolean hasKey;
+    public static final int MAX_HP = 25;
 
     public Hero(int x, int y) {
         this.x = x;

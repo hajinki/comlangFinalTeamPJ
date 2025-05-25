@@ -77,8 +77,10 @@ public class GameEngine {
             }
 
             if (canMoveTo(newX, newY)) {
+                if (tryDoor(newX, newY)) continue;
                 hero.setPosition(newX, newY);
                 checkForWeaponPickup(newX, newY);
+                checkForPotion(newX, newY);  
 
             } else {
                 System.out.println("그 방향으로는 갈 수 없습니다.");
@@ -187,6 +189,54 @@ public class GameEngine {
             }
         }
     }
+
+    private boolean tryDoor(int x, int y) throws IOException {
+        char[][] grid = room.getGrid();
+        if (grid[y][x] != 'D') return false;
+    
+        // 🔐 열쇠가 필요한 문인지 확인 → room3만!
+        if (room.getPath().contains("room3") && !hero.hasKey()) {
+            System.out.println("🚪 문이 잠겨있습니다. 열쇠가 필요합니다!");
+            return false;
+        }
+    
+        System.out.println("🚪 문을 열고 다음 방으로 이동합니다!");
+    
+        // 현재 방 상태 저장
+        FileManager.saveRoom(room.getPath(), grid);
+    
+        // 다음 방 로딩 (테스트 중이라면 room2로 고정)
+        room = new Room("data/room2.csv"); // 나중에 경로 동적으로 바꿔도 됨
+        placeHero();
+        return true;
+    }
+    
+    
+
+    private void checkForPotion(int x, int y) {
+        char[][] grid = room.getGrid();
+        char cell = grid[y][x];
+    
+        int recover = switch (cell) {
+            case 'm' -> 6;
+            case 'B' -> 12;
+            default -> 0;
+        };
+    
+        if (recover > 0) {
+            if (hero.getHp() < Hero.MAX_HP) {
+                int before = hero.getHp();
+                hero.changeHp(recover);
+                System.out.println("🧪 포션을 마셨습니다! HP: " + before + " → " + hero.getHp());
+                grid[y][x] = ' ';
+            } else {
+                System.out.println("🧪 포션을 발견했지만 HP가 가득 차 있어 남겨두었습니다.");
+            }
+        }
+    }
+
+    
+    
     
 
     private void updateGrid() {
