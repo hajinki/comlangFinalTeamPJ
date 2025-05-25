@@ -21,31 +21,45 @@ public class GameEngine {
         char[][] grid = room.getGrid();
         int rows = room.getRows();
         int cols = room.getCols();
-
+    
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 if (grid[i][j] == '@') {
-                    hero = new Hero(j, i);  // x=열, y=행
+                    if (hero == null) {
+                        hero = new Hero(j, i); // 처음 실행
+                    } else {
+                        hero.setPosition(j, i); // 기존 Hero 재사용
+                    }
                     return;
                 }
             }
         }
-
-        // @가 없을 경우 → (1,1) 또는 빈칸 랜덤
+    
+        // @를 못 찾은 경우 fallback → ❗ 여기서도 hero를 새로 만들지 말고 위치만 바꾸기
         if (grid[1][1] == ' ') {
-            hero = new Hero(1, 1);
+            if (hero == null) {
+                hero = new Hero(1, 1);
+            } else {
+                hero.setPosition(1, 1);
+            }
         } else {
             outer:
             for (int i = 0; i < rows; i++) {
                 for (int j = 0; j < cols; j++) {
                     if (grid[i][j] == ' ') {
-                        hero = new Hero(j, i);
+                        if (hero == null) {
+                            hero = new Hero(j, i);
+                        } else {
+                            hero.setPosition(j, i);
+                        }
                         break outer;
                     }
                 }
             }
         }
     }
+    
+    
 
     private void gameLoop() throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -148,47 +162,37 @@ public class GameEngine {
     
     
     private void checkForWeaponPickup(int x, int y) throws IOException {
-        char cell = room.getGrid()[y][x];
-        Weapon found = null;
+        char[][] grid = room.getGrid();
+        char cell = grid[y][x];
     
-        switch (cell) {
-            case 'S' -> found = new Weapon("Stick", 1);
-            case 'W' -> found = new Weapon("Weak Sword", 2);
-            case 'X' -> found = new Weapon("Strong Sword", 3);
-        }
+        Weapon found = switch (cell) {
+            case 'S' -> new Weapon("Stick", 1);
+            case 'W' -> new Weapon("Weak Sword", 2);
+            case 'X' -> new Weapon("Strong Sword", 3);
+            default -> null;
+        };
     
         if (found != null) {
-            Weapon current = hero.getWeapon();
-    
-            if (current == null) {
-                System.out.println("🔪 " + found.getName() + "를 주웠습니다!");
+            if (hero.getWeapon() == null) {
                 hero.setWeapon(found);
-                room.getGrid()[y][x] = ' ';
+                System.out.println("🗡 무기를 획득했습니다: " + found.getName());
+                grid[y][x] = ' ';
             } else {
-                System.out.println("🪓 현재 무기: " + current.getName() + " (공격력: " + current.getDamage() + ")");
-                System.out.println("⚔️ 발견한 무기: " + found.getName() + " (공격력: " + found.getDamage() + ")");
-                System.out.print("무기를 바꾸시겠습니까? (y/n): ");
                 BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                System.out.println("🗡 무기 '" + found.getName() + "' 을 발견했습니다! 현재 무기: " + hero.getWeapon().getName());
+                System.out.print("이 무기로 교체하시겠습니까? (y/n): ");
                 String input = reader.readLine();
-    
                 if (input.equalsIgnoreCase("y")) {
-                    System.out.println("🔁 무기를 교체했습니다!");
-                    // 방에 기존 무기 떨어뜨리기
-                    char dropSymbol = switch (current.getDamage()) {
-                        case 1 -> 'S';
-                        case 2 -> 'W';
-                        case 3 -> 'X';
-                        default -> ' ';
-                    };
-                    room.getGrid()[y][x] = dropSymbol;
-    
                     hero.setWeapon(found);
+                    grid[y][x] = ' ';
+                    System.out.println("🗡 무기를 " + found.getName() + " 으로 교체했습니다!");
                 } else {
-                    System.out.println("🚫 무기를 바꾸지 않았습니다.");
+                    System.out.println("❌ 무기 교체를 취소했습니다.");
                 }
             }
         }
     }
+    
 
     private boolean tryDoor(int x, int y) throws IOException {
         char[][] grid = room.getGrid();
@@ -201,13 +205,39 @@ public class GameEngine {
         }
     
         System.out.println("🚪 문을 열고 다음 방으로 이동합니다!");
+
+        String savePath = room.getPath().replace("data/", "save/");
+        FileManager.saveRoom(savePath, grid);
+
     
-        // 현재 방 상태 저장
-        FileManager.saveRoom(room.getPath(), grid);
+        // ✅ 다음 방 경로 결정
+        String nextPath = switch (room.getPath()) {
+            case "data/room1.csv" -> "data/room2.csv";
+            case "data/room2.csv" -> "data/room3.csv";
+            default -> null;
+        };
     
-        // 다음 방 로딩 (테스트 중이라면 room2로 고정)
-        room = new Room("data/room2.csv"); // 나중에 경로 동적으로 바꿔도 됨
-        placeHero();
+        if (nextPath == null) {
+            System.out.println("🎉 더 이상 이동할 방이 없습니다!");
+            return false;
+        }
+    
+        // ✅ 다음 방 로딩
+        room = new Room(nextPath);
+    
+        // ✅ Hero는 유지하고 위치만 재설정
+        for (int i = 0; i < room.getRows(); i++) {
+            for (int j = 0; j < room.getCols(); j++) {
+                if (room.getGrid()[i][j] == '@') {
+                    hero.setPosition(j, i); // ❗ 기존 Hero 유지
+                    return true;
+                }
+            }
+        }
+    
+        // Fallback: 빈칸에라도 배치
+        hero.setPosition(1, 1);
+        updateGrid(); 
         return true;
     }
     
