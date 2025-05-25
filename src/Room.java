@@ -6,9 +6,21 @@ public class Room {
     private int rows;
     private int cols;
     private char[][] grid;
+    private Monster[][] monsters;
+    private String path; // 🔸 이게 있어야 FileManager.loadGrid(path) 가능함
 
     public Room(String filename) throws IOException {
-        loadFromCSV(filename);
+        this.path = filename; // 🔸 먼저 path 저장
+        loadFromCSV(filename); // 🔸 CSV 파일 읽어서 grid 채움
+        monsters = new Monster[rows][cols]; // 🔸 몬스터 배열은 grid랑 같은 크기
+    }
+
+    public Monster getMonsterAt(int x, int y) {
+        return monsters[y][x];
+    }
+
+    public void setMonsterAt(int x, int y, Monster m) {
+        monsters[y][x] = m;
     }
 
     private void loadFromCSV(String filename) throws IOException {
@@ -16,19 +28,17 @@ public class Room {
         String[] size = reader.readLine().split(",");
         rows = Integer.parseInt(size[0].trim());
         cols = Integer.parseInt(size[1].trim());
-    
-        // 임시로 줄 저장
+
+        // 줄 전체 저장 후 파싱
         String[] lines = new String[rows];
         for (int i = 0; i < rows; i++) {
             lines[i] = reader.readLine();
-            // 실제 cols보다 길다면 그에 맞춰 확장
             int actualCols = lines[i].split(",", -1).length;
             if (actualCols > cols) cols = actualCols;
         }
-    
-        // 배열 재할당
+
         grid = new char[rows][cols];
-    
+
         for (int i = 0; i < rows; i++) {
             String[] tokens = lines[i].split(",", -1);
             for (int j = 0; j < cols; j++) {
@@ -39,10 +49,9 @@ public class Room {
                 }
             }
         }
-    
+
         reader.close();
     }
-    
 
     public void printRoom() {
         System.out.println("+".repeat(cols + 2));
@@ -60,6 +69,11 @@ public class Room {
         return grid;
     }
 
-    public int getRows() { return rows; }
-    public int getCols() { return cols; }
+    public int getRows() {
+        return rows;
+    }
+
+    public int getCols() {
+        return cols;
+    }
 }

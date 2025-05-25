@@ -96,11 +96,21 @@ public class GameEngine {
         for (int[] d : directions) {
             int nx = x + d[0];
             int ny = y + d[1];
+    
             if (nx >= 0 && ny >= 0 && ny < room.getRows() && nx < room.getCols()) {
                 char c = grid[ny][nx];
     
                 if (c == 'G' || c == 'O' || c == 'T') {
-                    Monster monster = new Monster(c);
+                    // ✅ 기존에 만들어둔 몬스터가 있는지 확인
+                    Monster monster = room.getMonsterAt(nx, ny);
+    
+                    // ✅ 없으면 새로 만들어서 room에 등록
+                    if (monster == null) {
+                        monster = new Monster(c);
+                        room.setMonsterAt(nx, ny, monster);
+                    }
+    
+                    // ✅ 전투 시작
                     BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
                     System.out.println("몬스터 발견! 종류: " + monster.getType() + " | HP: " + monster.getHp());
                     System.out.print("공격하시겠습니까? (y/n): ");
@@ -124,12 +134,16 @@ public class GameEngine {
                             hero.obtainKey();
                             System.out.println("🗝 열쇠를 얻었습니다!");
                         }
+    
+                        // ✅ grid랑 monsters 둘 다 비우기
                         grid[ny][nx] = ' ';
+                        room.setMonsterAt(nx, ny, null);
                     }
                 }
             }
         }
     }
+    
     
     private void checkForWeaponPickup(int x, int y) throws IOException {
         char cell = room.getGrid()[y][x];
