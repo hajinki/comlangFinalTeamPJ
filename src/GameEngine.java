@@ -1,14 +1,19 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.File;
+
 
 public class GameEngine {
     private Room room;
     private Hero hero;
+    private boolean isNewGame = true; // 새 게임 시작 시 true
+
 
     public void start() {
         System.out.println("=== Solo Adventure Maze ===");
         try {
+            isNewGame = true; 
             room = new Room("data/room1.csv");
             placeHero(); // @ 위치 찾기 또는 (1,1) 또는 랜덤
             gameLoop();
@@ -91,15 +96,21 @@ public class GameEngine {
             }
 
             if (canMoveTo(newX, newY)) {
-                if (tryDoor(newX, newY)) continue;
+                // ✅ 문이라면 이동 및 tryDoor() 실행
+                if (room.getGrid()[newY][newX] == 'D') {
+                    hero.setPosition(newX, newY);
+                    if (tryDoor(newX, newY)) continue; // 방 이동 완료되면 다음 루프 진행
+                }
+            
+                // ✅ 문이 아니면 일반 이동
                 hero.setPosition(newX, newY);
                 checkForWeaponPickup(newX, newY);
-                checkForPotion(newX, newY);  
-
+                checkForPotion(newX, newY);
             } else {
                 System.out.println("그 방향으로는 갈 수 없습니다.");
             }
         }
+
     }
 
     private void checkForCombat() throws IOException {
@@ -193,27 +204,27 @@ public class GameEngine {
         }
     }
     
-
     private boolean tryDoor(int x, int y) throws IOException {
         char[][] grid = room.getGrid();
         if (grid[y][x] != 'D') return false;
     
-        // 🔐 열쇠가 필요한 문인지 확인 → room3만!
         if (room.getPath().contains("room3") && !hero.hasKey()) {
             System.out.println("🚪 문이 잠겨있습니다. 열쇠가 필요합니다!");
             return false;
         }
     
         System.out.println("🚪 문을 열고 다음 방으로 이동합니다!");
-
-        String savePath = room.getPath().replace("data/", "save/");
-        FileManager.saveRoom(savePath, grid);
-
     
-        // ✅ 다음 방 경로 결정
-        String nextPath = switch (room.getPath()) {
+        // 저장
+        String originalPath = room.getPath();
+        String savePath = originalPath.replace("data/", "save/");
+        FileManager.saveRoom(savePath, grid);
+    
+        // 다음 방 결정
+        String nextPath = switch (originalPath) {
             case "data/room1.csv" -> "data/room2.csv";
             case "data/room2.csv" -> "data/room3.csv";
+            case "data/room3.csv" -> "data/room4.csv";
             default -> null;
         };
     
@@ -222,24 +233,46 @@ public class GameEngine {
             return false;
         }
     
-        // ✅ 다음 방 로딩
-        room = new Room(nextPath);
+        String nextSavePath = nextPath.replace("data/", "save/");
+        File file = new File(nextSavePath);
     
-        // ✅ Hero는 유지하고 위치만 재설정
-        for (int i = 0; i < room.getRows(); i++) {
-            for (int j = 0; j < room.getCols(); j++) {
-                if (room.getGrid()[i][j] == '@') {
-                    hero.setPosition(j, i); // ❗ 기존 Hero 유지
-                    return true;
+        if (!isNewGame && file.exists()) {
+            room = new Room(nextSavePath);
+        } else {
+            room = new Room(nextPath);
+        }
+    
+        isNewGame = false;
+      
+        int newX = x;
+        int newY = y;
+        if (newY >= room.getRows() || newX >= room.getCols() || room.getGrid()[newY][newX] != ' ') {
+            // fallback
+            outer:
+            for (int i = 0; i < room.getRows(); i++) {
+                for (int j = 0; j < room.getCols(); j++) {
+                    if (room.getGrid()[i][j] == ' ') {
+                        newY = i;
+                        newX = j;
+                        break outer;
                 }
             }
         }
+    }
+
+
     
-        // Fallback: 빈칸에라도 배치
-        hero.setPosition(1, 1);
-        updateGrid(); 
+        hero.setPosition(newX, newY);
+        updateGrid();
         return true;
     }
+    
+    
+
+    
+    
+    
+    
     
     
 
