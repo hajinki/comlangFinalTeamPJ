@@ -78,7 +78,7 @@ public class GameEngine {
 
             System.out.print("명령어 (u/d/l/r): ");
             String input = reader.readLine();
-            if (input.length() == 0) continue;
+            if (input == null || input.length() == 0) continue;
 
             char cmd = input.charAt(0);
             int newX = hero.getX();
@@ -203,6 +203,7 @@ public class GameEngine {
             }
         }
     }
+
     
     private boolean tryDoor(int x, int y) throws IOException {
         char[][] grid = room.getGrid();
@@ -243,22 +244,26 @@ public class GameEngine {
         }
     
         isNewGame = false;
+
+        
       
         int newX = x;
         int newY = y;
-        if (newY >= room.getRows() || newX >= room.getCols() || room.getGrid()[newY][newX] != ' ') {
-            // fallback
+        
+
+        if (newY >= room.getRows() || newX >= room.getCols() || room.getGrid()[newY][newX] == '#') {
+            // fallback: 빈 공간으로
             outer:
             for (int i = 0; i < room.getRows(); i++) {
                 for (int j = 0; j < room.getCols(); j++) {
                     if (room.getGrid()[i][j] == ' ') {
-                        newY = i;
                         newX = j;
+                        newY = i;
                         break outer;
+                    }
                 }
             }
         }
-    }
 
 
     
