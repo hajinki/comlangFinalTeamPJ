@@ -139,4 +139,27 @@ public class Room {
     public Map<Point, String> getReverseDoorMap() {
         return reverseDoorMap;
     }
+
+    public String getFilename() {
+        return path;
+    }
+
+    public void saveToFile(String filename) {
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(filename))) {
+            writer.write(rows + "," + cols);
+            writer.newLine();
+            for (int i = 0; i < rows; i++) {
+                StringBuilder sb = new StringBuilder();
+                for (int j = 0; j < cols; j++) {
+                    sb.append(grid[i][j]);
+                    if (j < cols - 1) sb.append(",");
+                }
+                writer.write(sb.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("💥 방 저장 실패: " + e.getMessage());
+        }
+    }
+
 } 

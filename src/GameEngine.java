@@ -73,22 +73,23 @@ public class GameEngine {
 
     private void gameLoop() throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
+        String input;
+    
         while (true) {
             printStatus();
             updateGrid();
             room.printRoom();
-
+    
             checkForCombat();
-
+    
             System.out.print("명령어 (u/d/l/r): ");
-            String input = reader.readLine();
+            input = reader.readLine();
             if (input == null || input.length() == 0) continue;
-
+    
             char cmd = input.charAt(0);
             int newX = hero.getX();
             int newY = hero.getY();
-
+    
             switch (cmd) {
                 case 'u' -> newY--;
                 case 'd' -> newY++;
@@ -99,29 +100,72 @@ public class GameEngine {
                     continue;
                 }
             }
-
-            if (canMoveTo(newX, newY)) {
-
-                char tile = room.getGrid()[newY][newX];
-                // 문(D)인지 확인
-                if (tile == 'D' || tile == 'd') {
-                    if (tryDoor(newX, newY)) continue; // 다음 방으로 이동 성공 시 continue
-                } else if (tile == 'G' || tile == 'T' || tile == 'm') { // 몬스터 종류 모두 체크
-                    System.out.println("❗ 몬스터가 길을 막고 있습니다! 공격하시겠습니까?");
-                    continue;
-                }
-                // 일반적인 이동 처리
-                else {
-                    hero.setPosition(newX, newY);
-                    checkForPotion(newX, newY);
-                    checkForWeaponPickup(newX, newY);
-                }
-            } else {
+    
+            if (!canMoveTo(newX, newY)) {
                 System.out.println("❌ 이동할 수 없습니다.");
+                continue;
             }
+    
+            char[][] grid = room.getGrid();
+            char tile = grid[newY][newX];
+    
+            // 문이라면 tryDoor() 실행
+            if (tile == 'D' || tile == 'd') {
+                if (tryDoor(newX, newY)) continue;
+            }
+    
+            // 몬스터라면 막기
+            if (tile == 'G' || tile == 'T' || tile == 'm') {
+                System.out.println("❗ 몬스터가 길을 막고 있습니다! 공격하시겠습니까?");
+                continue;
+            }
+    
+            // 무기 발견
+            Weapon found = switch (tile) {
+                case 'S' -> new Weapon("Stick", 1);
+                case 'W' -> new Weapon("Weak Sword", 2);
+                case 'X' -> new Weapon("Strong Sword", 3);
+                default -> null;
+            };
+    
+            if (found != null) {
+                if (hero.getWeapon() == null) {
+                    hero.setWeapon(found);
+                    System.out.println("🗡 무기를 획득했습니다: " + found.getName());
+                    grid[newY][newX] = ' ';
+                } else {
+                    System.out.println("🗡 무기 '" + found.getName() + "' 을 발견했습니다! 현재 무기: " + hero.getWeapon().getName());
+                    System.out.print("이 무기로 교체하시겠습니까? (y/n): ");
+                    input = reader.readLine();
+                    if (input.equalsIgnoreCase("y")) {
+                        hero.setWeapon(found);
+                        grid[newY][newX] = ' ';
+                        System.out.println("🗡 무기를 " + found.getName() + " 으로 교체했습니다!");
+                    } else {
+                        System.out.println("❌ 무기 교체를 취소했습니다.");
+                        // 무기 거절 시 해당 위치에 원래 무기 심볼 복구
+                        char weaponSymbol = switch (found.getName()) {
+                            case "Stick" -> 'S';
+                            case "Weak Sword" -> 'W';
+                            case "Strong Sword" -> 'X';
+                            default -> ' ';
+                        };
+                        grid[newY][newX] = weaponSymbol;
+                        continue; // 이동하지 않음
+                    }
+                }
+            }
+    
+            // 포션 확인
+            checkForPotion(newX, newY);
+    
+            // 이동 처리
+            grid[hero.getY()][hero.getX()] = ' ';  // 현재 위치 비움
+            hero.setPosition(newX, newY);          // 위치 갱신
+            grid[newY][newX] = '@';                // 새로운 위치에 '@'
         }
     }
-
+    
             
      
 
@@ -184,66 +228,24 @@ public class GameEngine {
     }
     
     
-    private void checkForWeaponPickup(int x, int y) throws IOException {
-        char[][] grid = room.getGrid();
-        char cell = grid[y][x];
+    // private void checkForWeaponPickup(int x, int y) throws IOException {
+    //     char[][] grid = room.getGrid();
+    //     char cell = grid[y][x];
     
-        Weapon found = switch (cell) {
-            case 'S' -> new Weapon("Stick", 1);
-            case 'W' -> new Weapon("Weak Sword", 2);
-            case 'X' -> new Weapon("Strong Sword", 3);
-            default -> null;
-        };
+    //     Weapon found = switch (cell) {
+    //         case 'S' -> new Weapon("Stick", 1);
+    //         case 'W' -> new Weapon("Weak Sword", 2);
+    //         case 'X' -> new Weapon("Strong Sword", 3);
+    //         default -> null;
+    //     };
 
-        int prevX = hero.getX();
-        int prevY = hero.getY();
+        // int prevX = hero.getX();
+        // int prevY = hero.getY();
 
 
-        if (found != null) {
-            if (hero.getWeapon() == null) {
-                // 무기 없을 때는 바로 장착
-                hero.setWeapon(found);
-                System.out.println("🗡 무기를 획득했습니다: " + found.getName());
-                grid[y][x] = ' ';
-            } else {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-                System.out.println("🗡 무기 '" + found.getName() + "' 을 발견했습니다! 현재 무기: " + hero.getWeapon().getName());
-                System.out.print("이 무기로 교체하시겠습니까? (y/n): ");
-                String input = reader.readLine();
-        
-                if (input.equalsIgnoreCase("y")) {
-                    hero.setWeapon(found);
-                    grid[y][x] = ' ';
-                    System.out.println("🗡 무기를 " + found.getName() + " 으로 교체했습니다!");
-                } else {
-                    System.out.println("❌ 무기 교체를 취소했습니다.");
-        
-                    // 무기 심볼 복구
-                    char weaponSymbol = switch (found.getName()) {
-                        case "Stick" -> 'S';
-                        case "Weak Sword" -> 'W';
-                        case "Strong Sword" -> 'X';
-                        default -> ' ';
-                    };
-                    grid[y][x] = weaponSymbol;
-        
-                    // ✅ 영웅을 원래 위치로 되돌리기
-                    grid[y][x] = weaponSymbol;            // 현재 자리에 무기 다시
-                    grid[prevY][prevX] = '@';             // 이전 자리에 영웅 다시 배치
-                    hero.setPosition(prevX, prevY);       // 좌표도 롤백
-        
-                    // 방 저장
-                    room.saveToFile("save/" + room.getFilename());
-                    return; // 이동 중단
-                }
-        
-                room.saveToFile("save/" + room.getFilename()); // 무기 변경 후에도 저장
-            }
-        }
-        
-    
         // if (found != null) {
         //     if (hero.getWeapon() == null) {
+        //         // 무기 없을 때는 바로 장착
         //         hero.setWeapon(found);
         //         System.out.println("🗡 무기를 획득했습니다: " + found.getName());
         //         grid[y][x] = ' ';
@@ -252,14 +254,15 @@ public class GameEngine {
         //         System.out.println("🗡 무기 '" + found.getName() + "' 을 발견했습니다! 현재 무기: " + hero.getWeapon().getName());
         //         System.out.print("이 무기로 교체하시겠습니까? (y/n): ");
         //         String input = reader.readLine();
+        
         //         if (input.equalsIgnoreCase("y")) {
         //             hero.setWeapon(found);
         //             grid[y][x] = ' ';
         //             System.out.println("🗡 무기를 " + found.getName() + " 으로 교체했습니다!");
-        //               } else {
+        //         } else {
         //             System.out.println("❌ 무기 교체를 취소했습니다.");
-                
-        //             // 💡 무기 거절 시 원래 무기 심볼 복구
+        
+        //             // 무기 심볼 복구
         //             char weaponSymbol = switch (found.getName()) {
         //                 case "Stick" -> 'S';
         //                 case "Weak Sword" -> 'W';
@@ -267,11 +270,52 @@ public class GameEngine {
         //                 default -> ' ';
         //             };
         //             grid[y][x] = weaponSymbol;
-        //             }
-                
+        
+        //             // ✅ 영웅을 원래 위치로 되돌리기
+        //             grid[y][x] = weaponSymbol;            // 현재 자리에 무기 다시
+        //             grid[prevY][prevX] = '@';             // 이전 자리에 영웅 다시 배치
+        //             hero.setPosition(prevX, prevY);       // 좌표도 롤백
+        
+        //             // 방 저장
+        //             room.saveToFile("save/" + room.getFilename());
+        //             return; // 이동 중단
+        //         }
+        
+        //         room.saveToFile("save/" + room.getFilename()); // 무기 변경 후에도 저장
         //     }
         // }
-    }
+        
+    
+    //     if (found != null) {
+    //         if (hero.getWeapon() == null) {
+    //             hero.setWeapon(found);
+    //             System.out.println("🗡 무기를 획득했습니다: " + found.getName());
+    //             grid[y][x] = ' ';
+    //         } else {
+    //             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    //             System.out.println("🗡 무기 '" + found.getName() + "' 을 발견했습니다! 현재 무기: " + hero.getWeapon().getName());
+    //             System.out.print("이 무기로 교체하시겠습니까? (y/n): ");
+    //             String input = reader.readLine();
+    //             if (input.equalsIgnoreCase("y")) {
+    //                 hero.setWeapon(found);
+    //                 grid[y][x] = ' ';
+    //                 System.out.println("🗡 무기를 " + found.getName() + " 으로 교체했습니다!");
+    //                   } else {
+    //                 System.out.println("❌ 무기 교체를 취소했습니다.");
+                
+    //                 // 💡 무기 거절 시 원래 무기 심볼 복구
+    //                 char weaponSymbol = switch (found.getName()) {
+    //                     case "Stick" -> 'S';
+    //                     case "Weak Sword" -> 'W';
+    //                     case "Strong Sword" -> 'X';
+    //                     default -> ' ';
+    //                 };
+    //                 grid[y][x] = weaponSymbol;
+    //                 }
+                
+    //         }
+    //     }
+    // }
 
     // GameEngine 필드에 추가
 private Map<String, Map<Point, DoorLink>> doorMap = new HashMap<>();
