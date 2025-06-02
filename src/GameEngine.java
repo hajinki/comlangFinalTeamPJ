@@ -374,7 +374,7 @@ private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point to
             return false;
         }
 
-        if (room.getPath().contains("room4.csv") && x == 0 && y == 4) {
+        if (room.getPath().contains("room4.csv") && x == 0 && y == 5) {
             System.out.println("🎉 축하합니다! 마스터 도어를 열고 게임을 클리어했습니다!");
             System.exit(0); // 게임 종료
             return true;
