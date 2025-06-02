@@ -340,8 +340,11 @@ private void initializeDoorLinks() {
     addDoorLink("room3.csv", new Point(4, 4), "room2.csv", new Point(5, 0));
     // addDoorLink("room2.csv", new Point(5, 0), "room3.csv", new Point(0, 0));
     // addDoorLink("room3.csv", new Point(0, 0), "room2.csv", new Point(5, 0));
-    addDoorLink("room4.csv", new Point(0, 5), "room3.csv", new Point(4, 4));  // 일반문 d
-    addDoorLink("room3.csv", new Point(4, 4), "room4.csv", new Point(0, 5));
+    // addDoorLink("room4.csv", new Point(0, 5), "room3.csv", new Point(4, 4));  // 일반문 d
+    // addDoorLink("room3.csv", new Point(4, 4), "room4.csv", new Point(0, 5));
+
+    addDoorLink("room4.csv", new Point(0, 5), "room3.csv", new Point(0, 0));
+    addDoorLink("room3.csv", new Point(0, 0), "room4.csv", new Point(0, 5));
 
     addDoorLink("room4.csv", new Point(4, 0), "room3.csv", new Point(0, 0));  // 마스터도어 D
     addDoorLink("room3.csv", new Point(0, 0), "room4.csv", new Point(4, 0));
