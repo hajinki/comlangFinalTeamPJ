@@ -115,7 +115,7 @@ public class GameEngine {
             }
     
             // 몬스터라면 막기
-            if (tile == 'G' || tile == 'T' || tile == 'm') {
+            if (tile == 'G' || tile == 'T' || tile == 'o') {
                 System.out.println("❗ 몬스터가 길을 막고 있습니다! 공격하시겠습니까?");
                 continue;
             }
@@ -156,8 +156,9 @@ public class GameEngine {
                 }
             }
     
-            // 포션 확인
-            checkForPotion(newX, newY);
+            if (!checkForPotion(newX, newY)) {
+                continue;  // 포션은 있지만 체력 만땅이라 안 마심 → 이동하지 않음
+            }
     
             // 이동 처리
             grid[hero.getY()][hero.getX()] = ' ';  // 현재 위치 비움
@@ -210,7 +211,12 @@ public class GameEngine {
     
                     System.out.println("👉 당신이 " + monster.getDamage() + " 피해를 입었습니다!");
                     System.out.println("👉 몬스터 HP: " + monster.getHp());
-    
+                    
+                    if (hero.getHp() <= 0) {
+                        System.out.println("💀 당신은 쓰러졌습니다. 게임 오버!");
+                        System.exit(0); // 게임 종료
+                    }
+
                     if (monster.isDead()) {
                         System.out.println("🎉 몬스터 처치 성공!");
                         if (c == 'T') {
@@ -221,6 +227,9 @@ public class GameEngine {
                         // ✅ grid랑 monsters 둘 다 비우기
                         grid[ny][nx] = ' ';
                         room.setMonsterAt(nx, ny, null);
+
+                        updateGrid();
+                        room.printRoom();
                     }
                 }
             }
@@ -454,27 +463,26 @@ private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point to
     
     
 
-    private void checkForPotion(int x, int y) {
+    private boolean checkForPotion(int x, int y) {
         char[][] grid = room.getGrid();
-        char cell = grid[y][x];
+        char nextTile = grid[y][x];
     
-        int recover = switch (cell) {
-            case 'm' -> 6;
-            case 'B' -> 12;
-            default -> 0;
-        };
+        if (nextTile == 'm' || nextTile == 'B') {
+            int recover = (nextTile == 'm') ? 6 : 12;
     
-        if (recover > 0) {
             if (hero.getHp() < Hero.MAX_HP) {
                 int before = hero.getHp();
                 hero.changeHp(recover);
                 System.out.println("🧪 포션을 마셨습니다! HP: " + before + " → " + hero.getHp());
-                grid[y][x] = ' ';
+                grid[y][x] = ' ';  // 포션 제거
             } else {
                 System.out.println("🧪 포션을 발견했지만 HP가 가득 차 있어 남겨두었습니다.");
+                return false;  // 이동하지 않음
             }
         }
+        return true;  // 이동 가능
     }
+    
 
     
     
