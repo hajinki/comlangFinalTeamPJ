@@ -15,6 +15,7 @@ public class FileManager {
         char[][] grid = new char[rows][cols];
         for (int i = 0; i < rows; i++) {
             String line = reader.readLine();
+            String[] chars = line.split(",", -1);
             for (int j = 0; j < cols; j++) {
                 grid[i][j] = (j < line.length()) ? line.charAt(j) : ' ';
             }
@@ -35,7 +36,10 @@ public class FileManager {
         for (int i = 0; i < rows; i++) {
             StringBuilder line = new StringBuilder();
             for (int j = 0; j < cols; j++) {
-                line.append(grid[i][j]);
+                char ch = grid[i][j];
+                if (ch == '@') ch = ' ';
+                line.append(ch);
+                if (j < cols - 1) line.append(",");
             }
             writer.write(line.toString());
             writer.newLine();
