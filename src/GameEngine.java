@@ -108,6 +108,11 @@ public class GameEngine {
     
             char[][] grid = room.getGrid();
             char tile = grid[newY][newX];
+            if (tile == 'D' && !hero.hasKey()) {
+                System.out.println("🔒 열쇠가 없어 마스터 도어로 이동할 수 없습니다!");
+                continue;  // 이동 막고 명령 재입력
+            }
+
     
             // 문이라면 tryDoor() 실행
             if (tile == 'D' || tile == 'd') {
@@ -175,7 +180,7 @@ public class GameEngine {
         int y = hero.getY();
         char[][] grid = room.getGrid();
     
-        int[][] directions = { {0,-1}, {0,1}, {-1,0}, {1,0} };
+        int[][] directions = { {0,-1}, {0,1}, {-1,0}, {1,0}, {-1,-1}, {-1,1},{1,-1},{1,1} };
     
         for (int[] d : directions) {
             int nx = x + d[0];
@@ -196,41 +201,62 @@ public class GameEngine {
     
                     // ✅ 전투 시작
                     BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-                    System.out.println("몬스터 발견! 종류: " + monster.getType() + " | HP: " + monster.getHp());
-                    System.out.print("공격하시겠습니까? (y/n): ");
-                    String input = reader.readLine();
-                    if (!input.equalsIgnoreCase("y")) continue;
-    
-                    if (hero.getWeapon() == null) {
-                        System.out.println("무기가 없어 공격할 수 없습니다!");
-                        continue;
-                    }
-    
-                    monster.takeDamage(hero.getWeapon().getDamage());
-                    hero.changeHp(-monster.getDamage());
-    
-                    System.out.println("👉 당신이 " + monster.getDamage() + " 피해를 입었습니다!");
-                    System.out.println("👉 몬스터 HP: " + monster.getHp());
-                    
-                    if (hero.getHp() <= 0) {
-                        System.out.println("💀 당신은 쓰러졌습니다. 게임 오버!");
-                        System.exit(0); // 게임 종료
-                    }
 
-                    if (monster.isDead()) {
-                        System.out.println("🎉 몬스터 처치 성공!");
-                        if (c == 'T') {
-                            hero.obtainKey();
-                            System.out.println("🗝 열쇠를 얻었습니다!");
+                    while (true) {
+                        System.out.println("🧟 몬스터 발견! 종류: " + monster.getType() + " | HP: " + monster.getHp());
+                        System.out.print("공격하시겠습니까? (y/n): ");
+                        String input = reader.readLine();
+
+                        if (input.equalsIgnoreCase("y")) {
+                            if (hero.getWeapon() == null) {
+                                System.out.println("⚠ 무기가 없어 공격할 수 없습니다!");
+                                break;
+                            }
+
+                            monster.takeDamage(hero.getWeapon().getDamage());
+                            hero.changeHp(-monster.getDamage());
+
+                            System.out.println("💥 당신이 " + monster.getDamage() + " 피해를 입었습니다.");
+                            System.out.println("⚔️ 당신이 " + monster.getType() + "에게 " + hero.getWeapon().getDamage() + " 피해를 입혔습니다!");
+                            System.out.println("❤️ 현재 HP: " + hero.getHp());
+
+
+                            
+                            if (hero.getHp() <= 0) {
+                                System.out.println("☠ 당신은 쓰러졌습니다. 게임 오버!");
+                                System.exit(0);
+                            }
+
+                            if (monster.isDead()) {
+                                System.out.println("✅ 몬스터 처치 성공!");
+                                if (c == 'T') {
+                                    hero.obtainKey();
+                                    System.out.println("🗝 열쇠를 얻었습니다!");
+                                }
+                                grid[ny][nx] = ' ';
+                                room.setMonsterAt(nx, ny, null);
+                                updateGrid();
+                                room.printRoom();
+                                break; // 전투 종료
+                            } else {
+                                // 몬스터가 아직 살아있을 때만 HP 표시
+                                System.out.println("🩸 몬스터 HP: " + monster.getHp());
+                                
+
+                                if (hero.getHp() <= 5) {
+                                    System.out.println("⚠️ 체력이 매우 낮습니다! 포션을 사용하거나 전투를 피하세요!");
+                                }
+                                room.printRoom();
+                            }
+
+                        } else if (input.equalsIgnoreCase("n")) {
+                            System.out.println("👉 전투를 회피했습니다.");
+                            break;
+                        } else {
+                            System.out.println("잘못된 입력입니다. y 또는 n을 입력하세요.");
                         }
-    
-                        // ✅ grid랑 monsters 둘 다 비우기
-                        grid[ny][nx] = ' ';
-                        room.setMonsterAt(nx, ny, null);
-
-                        updateGrid();
-                        room.printRoom();
                     }
+
                 }
             }
         }
@@ -385,18 +411,19 @@ private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point to
             System.out.println("문에 연결된 파일이 없습니다.");
             return false;
         }
-
+        // ✅ Master door (D): 열쇠 필요
+        if (tile == 'D' && !hero.hasKey()) {
+            System.out.println("🚪 마스터 도어입니다. 열쇠가 필요합니다!");
+            return false;
+        }
+        
         if (room.getPath().contains("room4.csv") && x == 0 && y == 5) {
             System.out.println("🎉 축하합니다! 마스터 도어를 열고 게임을 클리어했습니다!");
             System.exit(0); // 게임 종료
             return true;
         }
 
-        // ✅ Master door (D): 열쇠 필요
-        if (tile == 'D' && !hero.hasKey()) {
-            System.out.println("🚪 마스터 도어입니다. 열쇠가 필요합니다!");
-            return false;
-        }
+        
         
         String targetFilename = link.filename;
         Point newHeroPos = link.position;
@@ -521,4 +548,3 @@ private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point to
             " | 열쇠: " + (hero.hasKey() ? "있음" : "없음"));
     }
 }
-

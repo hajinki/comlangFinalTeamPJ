@@ -65,7 +65,7 @@ public class Room {
                             String[] parts = token.split(":");
                             if (parts.length == 2) {
                                 reverseDoorMap.put(new Point(j, i), parts[1]);
-                                System.out.println("📂 연결된 문 위치: " + new Point(j, i) + " → " + parts[1]);//
+                                // System.out.println("connected door location: " + new Point(j, i) + " → " + parts[1]);//
 
                                 doorMap.put(parts[1], new Point(j, i));
                         
@@ -163,3 +163,5 @@ public class Room {
     }
 
 } 
+
+
