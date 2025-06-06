@@ -2,6 +2,7 @@ public class Monster {
     private String type;
     private int hp;
     private int damage;
+   
 
     // ✅ GameEngine에서 호출하는 이 생성자 추가!
     public Monster(char type) {
@@ -28,7 +29,7 @@ public class Monster {
             }
         }
     }
-
+    
     // 기존 생성자도 필요하면 그대로 유지 가능
     public Monster(char type, int hp) {
         this.hp = hp;
