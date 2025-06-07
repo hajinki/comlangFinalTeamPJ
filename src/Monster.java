@@ -2,8 +2,9 @@ public class Monster {
     private String type;
     private int hp;
     private int damage;
+   
 
-    // ✅ GameEngine에서 호출하는 이 생성자 추가!
+    // GameEngine call
     public Monster(char type) {
         switch (type) {
             case 'G' -> {
@@ -28,8 +29,8 @@ public class Monster {
             }
         }
     }
-
-    // 기존 생성자도 필요하면 그대로 유지 가능
+    
+    // Existing creators can also be retained if needed
     public Monster(char type, int hp) {
         this.hp = hp;
         switch (type) {

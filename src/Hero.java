@@ -1,5 +1,5 @@
 public class Hero {
-    private int x, y; // 위치
+    private int x, y; // location
     private int hp;
     private Weapon weapon;
     private boolean hasKey;

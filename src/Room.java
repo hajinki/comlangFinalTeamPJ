@@ -158,7 +158,7 @@ public class Room {
                 writer.newLine();
             }
         } catch (IOException e) {
-            System.out.println("💥 방 저장 실패: " + e.getMessage());
+            System.out.println("fail to room save: " + e.getMessage());
         }
     }
 
