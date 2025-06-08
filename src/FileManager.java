@@ -2,7 +2,20 @@ import java.io.*;
 import java.util.List;
 
 public class FileManager {
+    public static void clearSaveFolder() {
+        File saveFolder = new File("save");
 
+        if (saveFolder.exists() && saveFolder.isDirectory()) {
+            File[] files = saveFolder.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile()) {
+                        file.delete(); 
+                    }
+                }
+            }
+        }
+    }
     public static char[][] loadRoom(String filepath, int[] size) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(filepath));
         String[] tokens = reader.readLine().split(",");

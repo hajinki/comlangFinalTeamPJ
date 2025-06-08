@@ -11,8 +11,9 @@ public class GameEngine {
     private Hero hero;
     private boolean isNewGame = true; // true, when new game start
 
-
+    
     public void start() {
+        FileManager.clearSaveFolder();
         System.out.println("=== Solo Adventure Maze ===");
         try {
             isNewGame = true; 
@@ -445,6 +446,6 @@ private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point to
     private void printStatus() {
         System.out.println("HP: " + hero.getHp() + 
             " | Weapon: " + (hero.getWeapon() != null ? hero.getWeapon().getName() : "no") + 
-            " | key: " + (hero.hasKey() ? "no" : "yes"));
+            " | key: " + (hero.hasKey() ? "yes" : "no"));
     }
 }
