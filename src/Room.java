@@ -41,7 +41,7 @@ public class Room {
 
         boolean isRoom3 = filename.contains("room3.csv");
         rows = isRoom3 ? baseRows + 1 : baseRows;
-        cols = isRoom3 ? baseCols + 1 : baseCols;
+        cols = isRoom3 ? baseCols + 1 : baseCols;//+1 when room 3 because of problem...
 
         String[] lines = new String[baseRows];
         for (int i = 0; i < baseRows; i++) {
