@@ -65,37 +65,37 @@ public class Room {
                             String[] parts = token.split(":");
                             if (parts.length == 2) {
                                 reverseDoorMap.put(new Point(j, i), parts[1]);
-                                // System.out.println("connected door location: " + new Point(j, i) + " → " + parts[1]);//
 
                                 doorMap.put(parts[1], new Point(j, i));
                         
-                                // room4로 가는 문이면 대문자 D, 아니면 소문자 d
+                                //hard coding error but we can't fixed it...
                                 if (parts[1].contains("room4.csv")) {
                                     if (filename.contains("room3.csv") && i == 0 && j == 0) {
-                                        grid[i][j] = 'd';  // room3의 위쪽 문은 일반문
+                                        grid[i][j] = 'd';  // room3 0.0 d
                                     } else {
-                                        grid[i][j] = 'D';  // 나머지는 마스터 도어
+                                        grid[i][j] = 'D';  // 
                                     }
                                 } else {
                                     grid[i][j] = 'd'; // Regular door
                                 }
                             } else {
                                 if (tile == '@') {
-                                    grid[i][j] = ' '; // '@'는 무시하고 빈칸으로 처리
+                                    grid[i][j] = ' '; // Processing if it is not a regular tile (m, G, W, etc.) or a door.
+                                    //@ is a temporary symbol representing coordinates immediately after movement, so save it as blank unconditionally
                                 } else {
                                     grid[i][j] = tile;
                                 }
                             }
                         } else {
                             if (tile == '@') {
-                                grid[i][j] = ' '; // '@'는 무시하고 빈칸으로 처리
+                                grid[i][j] = ' '; // blank if cell blank
                             } else {
                                 grid[i][j] = tile;
-                            } // 일반 타일
+                            } 
                         } 
 
                     } else {
-                        grid[i][j] = ' ';
+                        grid[i][j] = ' ';//room3 blank all ' '
                     }
                 }
             } else {
