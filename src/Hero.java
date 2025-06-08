@@ -27,10 +27,12 @@ public class Hero {
     }
 
     public Weapon getWeapon() { return weapon; }
+
     public void setWeapon(Weapon weapon) {
         this.weapon = weapon;
     }
 
     public boolean hasKey() { return hasKey; }
+    
     public void obtainKey() { this.hasKey = true; }
 }

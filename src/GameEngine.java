@@ -40,7 +40,7 @@ public class GameEngine {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 if (grid[i][j] == '@') {
-                    if (hero == null) {
+                    if (hero == null) {//null mean= hero first made
                         hero = new Hero(j, i); // firs execution
                     } else {
                         hero.setPosition(j, i); // reuse original hero
@@ -52,7 +52,8 @@ public class GameEngine {
             if (found) break;
         }
         if (found) return;
-        // fallback when cannot find hero → no make new hero
+        
+
         if (grid[0][0] == ' ') {
             if (hero == null) {
                 hero = new Hero(0, 0);
@@ -61,18 +62,20 @@ public class GameEngine {
             }
             return;
         }
-        List<Point> emptySpaces = new ArrayList<>();
+        List<Point> emptySpaces = new ArrayList<>();//Point is a class for storing x,y provided by Java
+
+                                                     //The empty Spaces are a list to store the blank coordinates in the room
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 if (grid[i][j] == ' ') {
-                    emptySpaces.add(new Point(j, i));
+                    emptySpaces.add(new Point(j, i));//run whole room
                 }
             }
         }
     
-        if (!emptySpaces.isEmpty()) {
-            Random rand = new Random();
-            Point randomSpot = emptySpaces.get(rand.nextInt(emptySpaces.size()));
+        if (!emptySpaces.isEmpty()) {//room empty?
+            Random rand = new Random();//java random number maker
+            Point randomSpot = emptySpaces.get(rand.nextInt(emptySpaces.size()));//choose random index in our list length
             if (hero == null) {
                 hero = new Hero(randomSpot.x, randomSpot.y);
             } else {
@@ -89,12 +92,12 @@ public class GameEngine {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String input;
     
-        while (true) {
+        while (true) {//infinite loop
             printStatus();
             updateGrid();
             room.printRoom();
     
-            checkForCombat();
+            checkForCombat();//Make sure you're near monsters before you move and that combat conditions have been met
     
             System.out.print("click to move (u/d/l/r): ");
             input = reader.readLine();
@@ -117,18 +120,18 @@ public class GameEngine {
     
             if (!canMoveTo(newX, newY)) {
                 System.out.println("can't move");
-                continue;
+                continue;//can move?
             }
     
             char[][] grid = room.getGrid();
-            char tile = grid[newY][newX];
+            char tile = grid[newY][newX];//Check the letters in the coordinates you want to move (tile)
             if (tile == 'D' && !hero.hasKey()) {
                 System.out.println("You need key to open master door");
-                continue;  // block to move
+                continue;  // if master door block to move
             }
 
     
-            // if door do tryDoor() 
+            // if door do tryDoor() -> if success move to new room
             if (tile == 'D' || tile == 'd') {
                 if (tryDoor(newX, newY)) continue;
             }
@@ -139,7 +142,7 @@ public class GameEngine {
                 continue;
             }
     
-            // 무기 발견
+            // weapon found
             Weapon found = switch (tile) {
                 case 'S' -> new Weapon("Stick", 1);
                 case 'W' -> new Weapon("Weak Sword", 2);
@@ -192,11 +195,11 @@ public class GameEngine {
     private void checkForCombat() throws IOException {
         int x = hero.getX();
         int y = hero.getY();
-        char[][] grid = room.getGrid();
+        char[][] grid = room.getGrid();//current map info 
     
-        int[][] directions = { {0,-1}, {0,1}, {-1,0}, {1,0}, {-1,-1}, {-1,1},{1,-1},{1,1} };
+        int[][] directions = { {0,-1}, {0,1}, {-1,0}, {1,0}, {-1,-1}, {-1,1},{1,-1},{1,1} };//Up, down, left, right + diagonal
     
-        for (int[] d : directions) {
+        for (int[] d : directions) {//check around cordinates
             int nx = x + d[0];
             int ny = y + d[1];
     
@@ -204,10 +207,10 @@ public class GameEngine {
                 char c = grid[ny][nx];
     
                 if (c == 'G' || c == 'O' || c == 'T') {
-                    // if have original monster
+                    // if monster exist, combat
                     Monster monster = room.getMonsterAt(nx, ny);
     
-                    // if not make new room
+                    // if not make new room, make monster(new object)
                     if (monster == null) {
                         monster = new Monster(c);
                         room.setMonsterAt(nx, ny, monster);
@@ -232,10 +235,9 @@ public class GameEngine {
 
                             System.out.println("You've been damaged " + monster.getDamage() + " point");
                             System.out.println("You attack to " + monster.getType() + " " + hero.getWeapon().getDamage() + " point");
-                            System.out.println("❤️ current HP: " + hero.getHp());
+                            System.out.println("current HP: " + hero.getHp());
 
 
-                            
                             if (hero.getHp() <= 0) {
                                 System.out.println("you died. game over!");
                                 System.exit(0);
@@ -248,13 +250,13 @@ public class GameEngine {
                                     System.out.println("get key!");
                                 }
                                 grid[ny][nx] = ' ';
-                                room.setMonsterAt(nx, ny, null);
+                                room.setMonsterAt(nx, ny, null);//if monster die, remove
                                 updateGrid();
                                 room.printRoom();
                                 break; // stop conbat
                             } else {
                                 // HP , only monster live
-                                System.out.println("🩸 monster HP: " + monster.getHp());
+                                System.out.println("monster HP: " + monster.getHp());
                                 
 
                                 if (hero.getHp() <= 5) {
@@ -276,118 +278,118 @@ public class GameEngine {
         }
     }
     
-private Map<String, Map<Point, DoorLink>> doorMap = new HashMap<>();
+    private Map<String, Map<Point, DoorLink>> doorMap = new HashMap<>();
 
-private static class DoorLink {
-    String filename;
-    Point position;
-
-    public DoorLink(String filename, Point position) {
-        this.filename = filename;
-        this.position = position;
-    }
-}
-
-private void initializeDoorLinks() {
-    // room1 (0,0) <-> room2 (2,5)
-    addDoorLink("room1.csv", new Point(0, 0), "room2.csv", new Point(2, 5));
-    addDoorLink("room2.csv", new Point(2, 5), "room1.csv", new Point(0, 0));
-
-    // room2 (5,0) <-> room3 (0,0)
-    addDoorLink("room2.csv", new Point(5, 0), "room3.csv", new Point(4, 4));
-    addDoorLink("room3.csv", new Point(4, 4), "room2.csv", new Point(5, 0));
-
-
-    addDoorLink("room4.csv", new Point(0, 5), "room3.csv", new Point(0, 0));
-    addDoorLink("room3.csv", new Point(0, 0), "room4.csv", new Point(0, 5));
-
-    addDoorLink("room4.csv", new Point(4, 0), "room3.csv", new Point(0, 0));  // master door D
-    addDoorLink("room3.csv", new Point(0, 0), "room4.csv", new Point(4, 0));
-
-
-}
-
-
-private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point toPos) {
-    doorMap.computeIfAbsent(fromRoom, k -> new HashMap<>())
-           .put(fromPos, new DoorLink(toRoom, toPos));
-}
-
-
+    private static class DoorLink {
+        String filename;
+        Point position;
     
-    private boolean tryDoor(int x, int y) throws IOException {
-        char tile = room.getGrid()[y][x];
-        // String targetFilename = room.getDoorFilenameAt(x, y);
-        String currentRoomName = new File(room.getPath()).getName(); // ex: room1.csv
-        DoorLink link = doorMap.getOrDefault(currentRoomName, new HashMap<>()).get(new Point(x, y));
-        
-        if (link == null) {
-            System.out.println("no connected file to door");
-            return false;
+        public DoorLink(String filename, Point position) {
+            this.filename = filename;
+            this.position = position;
         }
-        // ✅ Master door (D): 열쇠 필요
-        if (tile == 'D' && !hero.hasKey()) {
-            System.out.println("Master door. need key");
-            return false;
-        }
-        
-        if (room.getPath().contains("room4.csv") && x == 0 && y == 5) {
-            System.out.println("Congratulations! I opened the master door and cleared the game!");
-            System.exit(0); // 게임 종료
-            return true;
-        }
-
-        
-        
-        String targetFilename = link.filename;
-        Point newHeroPos = link.position;
-    
-
-        String currentPath = room.getPath();  // now room route (예: data/room1.csv)
-
-        
-    
-        System.out.println("Open the door and move to the next room!");
-    
-
-        // save now room status
-        String currentSavePath = room.getPath().replace("data/", "save/");
-        FileManager.saveRoom(currentSavePath, room.getGrid());
-
-        // ready next room info
-        String nextRoomName = link.filename;
-        String dataPath = "data/" + nextRoomName;
-        String savePath = "save/" + nextRoomName;
-        
-        File saveFile = new File(savePath);
-        
-        // if not room in save → bring data , because first visit
-    if (!saveFile.exists()) {
-        Room tempRoom = new Room(dataPath);           // data에서 최초 로드
-        FileManager.saveRoom(savePath, tempRoom.getGrid()); // save에 저장
     }
-
-    // reload in save
-    room = new Room(savePath);
-    isNewGame = true;  
-    placeHero();
-    updateGrid();
-
-    return true;
+    
+    private void initializeDoorLinks() {
+        // room1 (0,0) <-> room2 (2,5)
+        addDoorLink("room1.csv", new Point(0, 0), "room2.csv", new Point(2, 5));
+        addDoorLink("room2.csv", new Point(2, 5), "room1.csv", new Point(0, 0));
+    
+        // room2 (5,0) <-> room3 (0,0)
+        addDoorLink("room2.csv", new Point(5, 0), "room3.csv", new Point(4, 4));
+        addDoorLink("room3.csv", new Point(4, 4), "room2.csv", new Point(5, 0));
+    
+    
+        addDoorLink("room4.csv", new Point(0, 5), "room3.csv", new Point(0, 0));
+        addDoorLink("room3.csv", new Point(0, 0), "room4.csv", new Point(0, 5));
+    
+        addDoorLink("room4.csv", new Point(4, 0), "room3.csv", new Point(0, 0));  // master door D
+        addDoorLink("room3.csv", new Point(0, 0), "room4.csv", new Point(4, 0));
+    
+    
     }
+    
+    
+    private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point toPos) {
+        doorMap.computeIfAbsent(fromRoom, k -> new HashMap<>())
+               .put(fromPos, new DoorLink(toRoom, toPos));
+    }
+    
+    
+        
+        private boolean tryDoor(int x, int y) throws IOException {
+            char tile = room.getGrid()[y][x];//bring info in current room ex) d
+           
+            String currentRoomName = new File(room.getPath()).getName(); // ex: room1.csv- bring file name 
+            DoorLink link = doorMap.getOrDefault(currentRoomName, new HashMap<>()).get(new Point(x, y));//bring the door info map that match with current room name 
+            
+            if (link == null) {
+                System.out.println("no connected file to door");
+                return false;
+            }
+            // Master door (D)
+            if (tile == 'D' && !hero.hasKey()) {
+                System.out.println("Master door. need key");
+                return false;
+            }
+            
+            if (room.getPath().contains("room4.csv") && x == 0 && y == 5) {
+                System.out.println("Congratulations! I opened the master door and cleared the game!");
+                System.exit(0); // game end
+                return true;
+            }
+    
+            
+            
+            String targetFilename = link.filename;
+            Point newHeroPos = link.position;
+        
+    
+            String currentPath = room.getPath();  // now room route (ex: data/room1.csv)
+    
+            
+        
+            System.out.println("Open the door and move to the next room!");
+        
+    
+            // save now room status
+            String currentSavePath = room.getPath().replace("data/", "save/");
+            FileManager.saveRoom(currentSavePath, room.getGrid());
+    
+            // ready next room info
+            String nextRoomName = link.filename;
+            String dataPath = "data/" + nextRoomName;
+            String savePath = "save/" + nextRoomName;
+            
+            File saveFile = new File(savePath);
+            
+            // if not room in save → bring data , because first visit
+        if (!saveFile.exists()) {
+            Room tempRoom = new Room(dataPath);           // data at initial
+            FileManager.saveRoom(savePath, tempRoom.getGrid()); // save in 'save'
+        }
+    
+        // reload in save
+        room = new Room(savePath);
+        isNewGame = true;  
+        placeHero();// hero replace
+        updateGrid();
+    
+        return true;
+        }
     
 
     private boolean hasLivingMonsters() {
         for (int i = 0; i < room.getRows(); i++) {
-            for (int j = 0; j < room.getCols(); j++) {
+            for (int j = 0; j < room.getCols(); j++) {// rounding room
                 char tile = room.getGrid()[i][j];
                 if (tile == 'G' || tile == 'O' || tile == 'T') {
-                    return true;
+                    return true;// living monster
                 }
     
                 Monster m = room.getMonsterAt(j, i);
                 if (m != null && !m.isDead()) {
-                    return true;
+                    return true;// double check real dead even object
                 }
             }
         }
@@ -395,38 +397,25 @@ private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point to
     }
 
     
-    
-
-    
-    
-    
-    
-    
-    
-
-    private boolean checkForPotion(int x, int y) {
+     private boolean checkForPotion(int x, int y) {
         char[][] grid = room.getGrid();
-        char nextTile = grid[y][x];
+        char nextTile = grid[y][x];//future place of hero
     
         if (nextTile == 'm' || nextTile == 'B') {
-            int recover = (nextTile == 'm') ? 6 : 12;
+            int recover = (nextTile == 'm') ? 6 : 12;//condition ? when true : when lie
     
-            if (hero.getHp() < Hero.MAX_HP) {
-                int before = hero.getHp();
+            if (hero.getHp() < Hero.MAX_HP) {// when max, potion x
+                int before = hero.getHp();// save before drink potion and use to 'before'->'after' hp up!
                 hero.changeHp(recover);
                 System.out.println(" Drink potion! HP: " + before + " → " + hero.getHp());
-                grid[y][x] = ' ';  // 포션 제거
+                grid[y][x] = ' ';  // potion delete in tile
             } else {
                 System.out.println("Find potion, but potion is full.");
-                return false;  // 이동하지 않음
+                return false;  // potion don't move when don't eat
             }
         }
-        return true;  // 이동 가능
+        return true;  // can move
     }
-    
-
-    
-    
     
 
     private void updateGrid() {
@@ -439,10 +428,10 @@ private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point to
             }
         }
     
-        int y = hero.getY();
-        int x = hero.getX();
+        int y = hero.getY();//row
+        int x = hero.getX();//col, current hero location
     
-        // '@' when not monster is in upper
+        // '@' when not monster is in upper, If it overlaps with a monster, handle it separately (battle, prevention, etc.)
         char cell = grid[y][x];
         if (cell != 'G' && cell != 'O' && cell != 'T') {
             grid[y][x] = '@';
@@ -453,7 +442,7 @@ private void addDoorLink(String fromRoom, Point fromPos, String toRoom, Point to
     private boolean canMoveTo(int x, int y) {
         if (x < 0 || y < 0 || y >= room.getRows() || x >= room.getCols()) return false;
         char cell = room.getGrid()[y][x];
-        return cell != 'G' && cell != 'O' && cell != 'T';  // monster not pass
+        return cell != 'G' && cell != 'O' && cell != 'T';  // monster tile not pass
     }
 
     private void printStatus() {
