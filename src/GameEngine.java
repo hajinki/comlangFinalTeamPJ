@@ -5,6 +5,9 @@ import java.io.File;
 import java.awt.Point;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Random;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameEngine {
     private Room room;
@@ -32,7 +35,8 @@ public class GameEngine {
         char[][] grid = room.getGrid();
         int rows = room.getRows();
         int cols = room.getCols();
-    
+        
+        boolean found = false;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 if (grid[i][j] == '@') {
@@ -41,34 +45,43 @@ public class GameEngine {
                     } else {
                         hero.setPosition(j, i); // reuse original hero
                     }
-                    return;
+                    found = true;
+                    break;
+                }
+            }
+            if (found) break;
+        }
+        if (found) return;
+        // fallback when cannot find hero → no make new hero
+        if (grid[0][0] == ' ') {
+            if (hero == null) {
+                hero = new Hero(0, 0);
+            } else {
+                hero.setPosition(0, 0);
+            }
+            return;
+        }
+        List<Point> emptySpaces = new ArrayList<>();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (grid[i][j] == ' ') {
+                    emptySpaces.add(new Point(j, i));
                 }
             }
         }
     
-        // fallback when cannot find hero → no make new hero
-        if (grid[1][1] == ' ') {
+        if (!emptySpaces.isEmpty()) {
+            Random rand = new Random();
+            Point randomSpot = emptySpaces.get(rand.nextInt(emptySpaces.size()));
             if (hero == null) {
-                hero = new Hero(1, 1);
+                hero = new Hero(randomSpot.x, randomSpot.y);
             } else {
-                hero.setPosition(1, 1);
-            }
-        } else {
-            outer:
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < cols; j++) {
-                    if (grid[i][j] == ' ') {
-                        if (hero == null) {
-                            hero = new Hero(j, i);
-                        } else {
-                            hero.setPosition(j, i);
-                        }
-                        break outer;
-                    }
-                }
+                hero.setPosition(randomSpot.x, randomSpot.y);
             }
         }
     }
+        
+    
     
     
 
